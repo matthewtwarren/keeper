@@ -3,10 +3,11 @@ import SwiftUI
 struct ContentView: View {
     @State private var session = Session()
     @State private var choosingFolder = false
+    @State private var showingHelp = false
 
     var body: some View {
         HStack(spacing: 0) {
-            Sidebar(session: session, openFolder: { choosingFolder = true })
+            Sidebar(session: session, openFolder: { choosingFolder = true }, openHelp: { showingHelp = true })
             Rectangle().fill(Theme.border).frame(width: 1)
             main
         }
@@ -20,6 +21,9 @@ struct ContentView: View {
         }
         .sheet(isPresented: $session.showingSummary) {
             SummaryView(session: session)
+        }
+        .sheet(isPresented: $showingHelp) {
+            HelpView { showingHelp = false }
         }
     }
 
@@ -148,6 +152,7 @@ private struct MarkBadge: View {
 private struct Sidebar: View {
     let session: Session
     let openFolder: () -> Void
+    let openHelp: () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -218,8 +223,12 @@ private struct Sidebar: View {
             if let message = session.message {
                 Text(message).foregroundStyle(Theme.accent)
             }
-            Chip(label: "OPEN FOLDER", key: "⌘O", action: openFolder)
-                .keyboardShortcut("o", modifiers: .command)
+            HStack(spacing: 8) {
+                Chip(label: "OPEN FOLDER", key: "⌘O", action: openFolder)
+                    .keyboardShortcut("o", modifiers: .command)
+                Chip(label: "HELP", key: "H", action: openHelp)
+                    .keyboardShortcut("h", modifiers: [])
+            }
         }
         .font(Theme.mono(10))
         .frame(maxWidth: .infinity, alignment: .leading)
