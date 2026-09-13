@@ -9,8 +9,11 @@ final class Session {
     var keepRawForUntagged = false
     var showingSummary = false
     var message: String?
+    var pinnedID: String?
+    var previewRevision = 0
 
     var current: Photo? { photos.indices.contains(index) ? photos[index] : nil }
+    var pinned: Photo? { photos.first { $0.id == pinnedID } }
     var deleteFolder: URL? { folder?.appendingPathComponent("delete") }
     var plannedMoves: [URL] { movePlan(photos, keepRawForUntagged: keepRawForUntagged) }
 
@@ -22,6 +25,7 @@ final class Session {
         folder = url
         index = 0
         message = nil
+        pinnedID = nil
         reload()
     }
 
@@ -34,6 +38,7 @@ final class Session {
             message = error.localizedDescription
         }
         index = min(index, max(photos.count - 1, 0))
+        if pinned == nil { pinnedID = nil }
     }
 
     func next() {
@@ -53,6 +58,36 @@ final class Session {
     func skip() {
         setMark(.none)
         next()
+    }
+
+    func rotate(clockwise: Bool) {
+        guard let photo = current else { return }
+        guard let jpg = photo.jpg else {
+            message = "\(photo.baseName) HAS NO JPG TO ROTATE"
+            return
+        }
+        do {
+            try rotateJPG(jpg, clockwise: clockwise)
+            previewRevision += 1
+        } catch {
+            message = error.localizedDescription
+        }
+    }
+
+    func toggleCompare() {
+        if pinnedID != nil {
+            pinnedID = nil
+            return
+        }
+        guard let photo = current else { return }
+        pinnedID = photo.id
+        next()
+    }
+
+    func swapCompare() {
+        guard let photo = current, let pinnedIndex = photos.firstIndex(where: { $0.id == pinnedID }) else { return }
+        pinnedID = photo.id
+        index = pinnedIndex
     }
 
     func commitMoves() {

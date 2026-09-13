@@ -29,8 +29,16 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 header(photo)
                 Rectangle().fill(Theme.border).frame(height: 1)
-                QuickLookView(url: photo.previewURL)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                if let pinned = session.pinned {
+                    HStack(spacing: 0) {
+                        pane(pinned, caption: "PINNED")
+                        Rectangle().fill(Theme.border).frame(width: 1)
+                        pane(photo, caption: "CURRENT")
+                    }
+                } else {
+                    QuickLookView(url: photo.previewURL, revision: session.previewRevision)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
                 Rectangle().fill(Theme.border).frame(height: 1)
                 actions(photo)
             }
@@ -50,6 +58,16 @@ struct ContentView: View {
             Text("\(session.index + 1) / \(session.photos.count)").foregroundStyle(Theme.muted)
             Spacer()
             Text(fileLabel(photo)).foregroundStyle(Theme.muted)
+            Chip(label: "↺", key: "⇧R") { session.rotate(clockwise: false) }
+                .keyboardShortcut("r", modifiers: .shift)
+            Chip(label: "↻", key: "R") { session.rotate(clockwise: true) }
+                .keyboardShortcut("r", modifiers: [])
+            Chip(label: "COMPARE", key: "C", selected: session.pinned != nil, action: session.toggleCompare)
+                .keyboardShortcut("c", modifiers: [])
+            if session.pinned != nil {
+                Chip(label: "SWAP", key: "X", action: session.swapCompare)
+                    .keyboardShortcut("x", modifiers: [])
+            }
             Chip(label: "‹", action: session.previous)
                 .keyboardShortcut(.leftArrow, modifiers: [])
             Chip(label: "›", action: session.next)
@@ -57,6 +75,22 @@ struct ContentView: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 12)
+    }
+
+    private func pane(_ photo: Photo, caption: String) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Text(caption).foregroundStyle(Theme.muted)
+                MarkBadge(mark: photo.mark)
+                Text(photo.baseName.uppercased())
+                Spacer()
+            }
+            .font(Theme.mono(10))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            QuickLookView(url: photo.previewURL, revision: session.previewRevision)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func actions(_ photo: Photo) -> some View {
@@ -96,6 +130,21 @@ struct ContentView: View {
     }
 }
 
+private struct MarkBadge: View {
+    let mark: Mark
+
+    var body: some View {
+        Group {
+            switch mark {
+            case .colour(let colour): Circle().fill(colour.swatch).frame(width: 8, height: 8)
+            case .delete: Text("×").foregroundStyle(Theme.text)
+            case .none: Color.clear
+            }
+        }
+        .frame(width: 10, height: 10)
+    }
+}
+
 private struct Sidebar: View {
     let session: Session
     let openFolder: () -> Void
@@ -112,7 +161,11 @@ private struct Sidebar: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(session.photos.indices, id: \.self) { position in
-                            row(session.photos[position], isCurrent: position == session.index)
+                            row(
+                                session.photos[position],
+                                isCurrent: position == session.index,
+                                isPinned: session.photos[position].id == session.pinnedID
+                            )
                                 .id(position)
                                 .onTapGesture { session.index = position }
                         }
@@ -129,20 +182,16 @@ private struct Sidebar: View {
         .frame(width: 220)
     }
 
-    private func row(_ photo: Photo, isCurrent: Bool) -> some View {
+    private func row(_ photo: Photo, isCurrent: Bool, isPinned: Bool) -> some View {
         HStack(spacing: 8) {
-            Group {
-                switch photo.mark {
-                case .colour(let colour): Circle().fill(colour.swatch).frame(width: 8, height: 8)
-                case .delete: Text("×").foregroundStyle(Theme.text)
-                case .none: Color.clear
-                }
-            }
-            .frame(width: 10)
+            MarkBadge(mark: photo.mark)
             Text(photo.baseName.uppercased())
                 .strikethrough(photo.mark == .delete)
                 .lineLimit(1)
             Spacer()
+            if isPinned {
+                Text("PIN").font(Theme.mono(9)).foregroundStyle(Theme.accent)
+            }
             if photo.raf != nil {
                 Text("RAF").font(Theme.mono(9)).foregroundStyle(Theme.muted)
             }
