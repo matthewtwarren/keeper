@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Resources/AppIcon.png">
+  <img src="Resources/AppIcon-light.png" width="128" alt="Keeper icon">
+</picture>
+
 # Keeper
 
 A simple macOS app for processing photos from my Fuji camera.
@@ -8,11 +13,20 @@ Each JPEG (JPG) and RAW (RAF) with the same name are treated as one photo. For p
 
 **Keeper never deletes anything.** "Deleted" files are simply moved to `<folder>/delete/` after you review.
 
+![Browsing a folder, with tagged and flagged photos in the sidebar](docs/screenshots/browse.jpg)
+
+![Compare mode: a pinned photo on the left, the current photo on the right](docs/screenshots/compare.jpg)
+
+| Help                                    | Review                                      |
+| --------------------------------------- | ------------------------------------------- |
+| ![Help sheet](docs/screenshots/help.png) | ![Review summary](docs/screenshots/review.png) |
+
 ## Build
 
 ```bash
 make app        # builds Keeper.app in the repo root
 open Keeper.app
+open Keeper.app --args --open ~/Pictures/shoot   # open a folder on launch
 make test       # move-plan tests
 make icon       # redraws Resources/AppIcon.icns from Resources/make-icon.swift
 ```

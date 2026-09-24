@@ -1,13 +1,24 @@
-// Draws the Keeper icon and writes Resources/AppIcon.icns. Run with `make icon`.
+// Draws the Keeper icon and writes Resources/AppIcon.icns, AppIcon.png and AppIcon-light.png. Run with `make icon`.
 import AppKit
 
-let background = CGColor(srgbRed: 0x10 / 255, green: 0x10 / 255, blue: 0x15 / 255, alpha: 1)
-let border = CGColor(srgbRed: 0x2A / 255, green: 0x2A / 255, blue: 0x35 / 255, alpha: 1)
+struct Palette {
+    let background: CGColor
+    let border: CGColor
+}
+
+let dark = Palette(
+    background: CGColor(srgbRed: 0x10 / 255, green: 0x10 / 255, blue: 0x15 / 255, alpha: 1),
+    border: CGColor(srgbRed: 0x2A / 255, green: 0x2A / 255, blue: 0x35 / 255, alpha: 1)
+)
+let light = Palette(
+    background: CGColor(srgbRed: 0xEC / 255, green: 0xEC / 255, blue: 0xEF / 255, alpha: 1),
+    border: CGColor(srgbRed: 0xD2 / 255, green: 0xD2 / 255, blue: 0xD9 / 255, alpha: 1)
+)
 let accent = CGColor(srgbRed: 0x50 / 255, green: 0x63 / 255, blue: 0x85 / 255, alpha: 1)
 let tag = CGColor(srgbRed: 0x5B / 255, green: 0xC2 / 255, blue: 0x36 / 255, alpha: 1)
 
 // Same 64-unit grid and outer square as Crate's logo.svg, with a tagged photo in place of the record.
-func drawLogo(_ context: CGContext) {
+func drawLogo(_ context: CGContext, _ palette: Palette) {
     context.setStrokeColor(accent)
     context.setLineCap(.round)
     context.setLineJoin(.round)
@@ -28,13 +39,13 @@ func drawLogo(_ context: CGContext) {
     context.strokePath()
 
     let dot = CGRect(x: 45.5, y: 14.5, width: 11, height: 11)
-    context.setFillColor(background)
+    context.setFillColor(palette.background)
     context.fillEllipse(in: dot.insetBy(dx: -2.5, dy: -2.5))
     context.setFillColor(tag)
     context.fillEllipse(in: dot)
 }
 
-func renderPNG(size: Int) -> Data {
+func renderPNG(size: Int, _ palette: Palette = dark) -> Data {
     let rep = NSBitmapImageRep(
         bitmapDataPlanes: nil, pixelsWide: size, pixelsHigh: size, bitsPerSample: 8, samplesPerPixel: 4,
         hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0
@@ -51,22 +62,25 @@ func renderPNG(size: Int) -> Data {
     // macOS icon grid: an 824pt tile centred on the 1024 canvas.
     let tile = CGPath(roundedRect: CGRect(x: 100, y: 100, width: 824, height: 824), cornerWidth: 185, cornerHeight: 185, transform: nil)
     context.addPath(tile)
-    context.setFillColor(background)
+    context.setFillColor(palette.background)
     context.fillPath()
     context.addPath(tile)
-    context.setStrokeColor(border)
+    context.setStrokeColor(palette.border)
     context.setLineWidth(6)
     context.strokePath()
 
     context.translateBy(x: 192, y: 192)
     context.scaleBy(x: 10, y: 10)
-    drawLogo(context)
+    drawLogo(context, palette)
 
     NSGraphicsContext.restoreGraphicsState()
     return rep.representation(using: .png, properties: [:])!
 }
 
 let resources = URL(fileURLWithPath: CommandLine.arguments[1])
+// For the README
+try renderPNG(size: 256).write(to: resources.appendingPathComponent("AppIcon.png"))
+try renderPNG(size: 256, light).write(to: resources.appendingPathComponent("AppIcon-light.png"))
 let iconset = FileManager.default.temporaryDirectory.appendingPathComponent("AppIcon.iconset")
 try? FileManager.default.removeItem(at: iconset)
 try FileManager.default.createDirectory(at: iconset, withIntermediateDirectories: true)

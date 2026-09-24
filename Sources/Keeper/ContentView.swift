@@ -25,6 +25,13 @@ struct ContentView: View {
         .sheet(isPresented: $showingHelp) {
             HelpView { showingHelp = false }
         }
+        .onAppear {
+            // `Keeper --open <folder>` opens a folder on launch.
+            let arguments = CommandLine.arguments
+            if let flag = arguments.firstIndex(of: "--open"), arguments.indices.contains(flag + 1) {
+                session.open(URL(fileURLWithPath: arguments[flag + 1]))
+            }
+        }
     }
 
     @ViewBuilder
