@@ -13,14 +13,6 @@ Each JPEG (JPG) and RAW (RAF) with the same name are treated as one photo. For p
 
 **Keeper never deletes anything.** "Deleted" files are simply moved to `<folder>/delete/` after you review.
 
-![Browsing a folder, with tagged and flagged photos in the sidebar](docs/screenshots/browse.jpg)
-
-![Compare mode: a pinned photo on the left, the current photo on the right](docs/screenshots/compare.jpg)
-
-| Help                                    | Review                                      |
-| --------------------------------------- | ------------------------------------------- |
-| ![Help sheet](docs/screenshots/help.png) | ![Review summary](docs/screenshots/review.png) |
-
 ## Build
 
 ```bash
