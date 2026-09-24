@@ -1,6 +1,6 @@
 # Keeper
 
-A small macOS app for processing shots from my Fujifilm camera.
+A simple macOS app for processing photos from my Fuji camera.
 
 Open a folder, scroll through each photo with a QuickLook preview; tag favourite photos with a colour that appears in Finder; and flag photos for deletion. Photos can also be rotated and compared side-by-side.
 
